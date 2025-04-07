@@ -2,8 +2,9 @@ import { ContactCard } from "./contactCard"
 import { AiFillIdcard } from "react-icons/ai";
 import {useState} from "react"
 import { useEffect } from "react"; 
-import {db} from "@/firebaseConfig"
+import {db , storage} from "@/firebaseConfig"
 import {collection, doc ,addDoc,setDoc } from 'firebase/firestore/lite';
+import {ref, uploadBytes, getDownloadURL  } from  "firebase/storage";
 
 
 
@@ -11,28 +12,20 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
     // inputs del modal
     const [inputName,setInputName] = useState('') ;
     const [inputLastName,setInputLastName] = useState('') ;
-    const [inputUrl,setInputUrl] = useState('') ;
     const [inputPhone,setInputPhone] = useState('') ;
+    const [imagefile,setImagefile] = useState('')
 
     const submitInfo = async () => {
-        const newUser = {
-            name: inputName,
-            lastName: inputLastName,
-            url: inputUrl,
-            phone: inputPhone,
-
-        };
-        
+        const imagePath = await uploadImage(imagefile)
+          
         // console.log(newUser);
 
-        await addNewUser();
+        await addNewUser(imagePath);
 
         setInputName("");
         setInputLastName("");
-        setInputUrl("");
+        setImagefile("");
         setInputPhone("");
-
-
     } 
 // Add a new document with a generated id.
 // const docRef = await addDoc(collection(db, "cities"), {
@@ -40,7 +33,9 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
 //     country: "Japan"
 //   });
 //   console.log("Document written with ID: ", docRef.id);
-    async function addNewUser() { 
+    async function addNewUser(imagePath) { 
+        const imagePathFull = ref(storage,imagePath);
+        const imageFullUrl = await getDownloadURL(imagePathFull)
         // se creo el nuevo usuario vacio 
         const newUser = await doc (collection(db,"users"))
         // se actualiza el nuevo usario con la informacion de los inputs ademas de tu propio id 
@@ -48,7 +43,7 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
             id: newUser.id,
             name: inputName,
             lastName: inputLastName,
-            url: inputUrl || "https://images.vexels.com/media/users/3/136558/isolated/preview/43cc80b4c098e43a988c535eaba42c53-icono-de-usuario-de-persona.png",
+            url: imageFullUrl|| "https://images.vexels.com/media/users/3/136558/isolated/preview/43cc80b4c098e43a988c535eaba42c53-icono-de-usuario-de-persona.png",
             phone: inputPhone,
         });
         // console.log("el nuevo usuario es ", newUser);
@@ -60,11 +55,23 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
         import("bootstrap/dist/js/bootstrap.bundle.min");
       }, []);
 
+
+    const uploadImage = async (e) => {
+        const storageRef = ref(storage, `user-images/${e.name}`);
+        // sube el archico
+        const response = await uploadBytes(storageRef, e, {contentType: e.type, });
+        return response.metadata.fullPath;
+        
+    }
+
     return(
-        <nav className="display: flex flex-col h-[100vh] overflow-y-scroll">
-            <div className="flex justify-around  bg-amber-300">
-                <h2 >Lista de chats</h2>
-                <button type="button" className="btn btn-warning border-2 border-black" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <nav className=" flex-col  overflow-y-scroll scrollbar-none border-2 rounded-3xl m-1" > 
+            <div className="flex justify-around  bg-blue-900 text-center items-center">
+                <h2 className="text-white"
+                    style={{
+                        textShadow: '2px 2px 8px rgba(0, 0, 0, 3)'
+                    }} >Lista de chats</h2>
+                <button type="button" className="btn btn-primary border-2 border-black" data-bs-toggle="modal" data-bs-target="#exampleModal">
                     <p className="text-black-100 text-4xl"><AiFillIdcard /></p>
                 </button>
 
@@ -81,7 +88,7 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
                     <div className="modal-body flex flex-col">
                         <input value={inputName} onChange={(e) => setInputName(e.target.value)} className="rounded-2xl" placeholder="nombre" ></input>
                         <input value={inputLastName} onChange={(event) => setInputLastName(event.target.value)}  className="rounded-3xl" placeholder="apellido"></input>
-                        <input value={inputUrl} onChange={(e) => setInputUrl(e.currentTarget.value)} className="rounded-2xl" placeholder="url"></input>
+                        <input type="file" onChange={(e) => setImagefile(e.target.files[0])} className="rounded-2xl" placeholder="url"></input>
                         <input value={inputPhone} onChange={(e) => setInputPhone(e.currentTarget.value)}  className="rounded-2xl" placeholder="telefono"></input>
                         
                     </div>
