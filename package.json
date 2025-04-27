@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "^0.8.0",
     "@tailwindcss/postcss": "^4.0.13",
     "bootstrap": "^5.3.3",
     "firebase": "^11.5.0",

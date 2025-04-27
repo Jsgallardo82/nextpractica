@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-
+import { GoogleGenAI } from "@google/genai";
 import Link from "next/link"
 import {db } from "@/firebaseConfig"
 import { collection, getDocs, query, where, setDoc } from "firebase/firestore/lite"
@@ -11,6 +11,10 @@ import { collection, getDocs, query, where, setDoc } from "firebase/firestore/li
 //   });
 //   console.log("Document written with ID: ", docRef.id);
 
+const ai = new GoogleGenAI({
+    apiKey: process.env.NEXT_PUBLIC_GEMINI_APIKEY,
+});
+
 export const Chat = ({activeUser}) => {
     const [inputValue,setInputValue] = useState('') ;
     const [messages, setMessages] = useState([]);
@@ -18,26 +22,43 @@ export const Chat = ({activeUser}) => {
     // console.log(activeUser)
     // console.log(activeUser.user)
 
-    useEffect( () => {
-        setMessages([]);
-        const getConversations = async () => {
-            const q = query(
-                collection(db, 'conversations'),
-                where("userId","==", activeUser.user.id)
-            );
+    const chat = ai.chats.create({
+        model: "gemini-2.0-flash",
+        history: [
+          {
+            role: "user",
+            parts: [{ text: "Hello" }],
+          },
+          {
+            role: "model",
+            parts: [{ text: "Great to meet you. What would you like to know?" }],
+          },
+        ],
+        config: {
+            systemInstruction: "You are a cat. Your name is Neko.",
+          },
+    });
 
-            const conversationSnap = await getDocs(q);
-            const conversationData = conversationSnap.docs.map((doc) => doc.data());
-            if (conversationData[0].messages) {
-                setMessages(conversationData[0].messages)
-                console.log(conversationData[0].messages[0].senderId)
-            }            
-        };
+    // useEffect( () => {
+    //     setMessages([]);
+    //     const getConversations = async () => {
+    //         const q = query(
+    //             collection(db, 'conversations'),
+    //             where("userId","==", activeUser.user.id)
+    //         );
 
-        getConversations();
-    },[activeUser]);
+    //         const conversationSnap = await getDocs(q);
+    //         const conversationData = conversationSnap.docs.map((doc) => doc.data());
+    //         if (conversationData[0].messages) {
+    //             setMessages(conversationData[0].messages)
+    //             console.log(conversationData[0].messages[0].senderId)
+    //         }            
+    //     };
 
-    const submitMessage = (senderId) => {
+    //     getConversations();
+    // },[activeUser]);
+
+    const submitMessage = async (senderId) => {
         const newMessage = {
             text: inputValue,
             senderId: senderId ,
@@ -46,12 +67,28 @@ export const Chat = ({activeUser}) => {
         setMessages((prev) => [...prev, newMessage]);
 
         
-
+        await askGemini(inputValue)
         setInputValue("");
         // console.log(author)
     } 
     // console.log(activeUser)  
     // href={`/perfil?userName=${activeUser.user.name}`}
+
+    const askGemini = async (inputValue) => {
+        const response = await chat.sendMessage({
+            message: inputValue,
+        })
+
+        console.log("responde", response.text);
+
+        const newMessage ={
+            text: response.text,
+            senderId: activeUser.user.id
+        };
+
+        setMessages((prev) => [...prev, newMessage]);
+    }
+
     return(
         <div className="display: flex flex-col justify-between bg-blue-900 m-1 p-1 border-2 border-blue-500 rounded-3xl ">
             <div className="flex justify-between m-2 items-center">
@@ -72,7 +109,7 @@ export const Chat = ({activeUser}) => {
                     <img className="h-30 w-30 rounded-3xl border-blue-400 border-4" src={activeUser.user.url}></img>
                 </div>
             </div>
-            <section className="border-blue-400 border-5 w-full h-full gap-2 rounded-2xl">
+            <section className="border-blue-400 border-5 w-full h-[65vh] gap-2 rounded-2xl overflow-y-scroll scrollbar-none">
             {messages.map((message,index) =>(
                 <div 
                     key={index}
