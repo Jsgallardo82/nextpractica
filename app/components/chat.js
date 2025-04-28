@@ -2,14 +2,8 @@ import { useEffect, useState } from "react"
 import { GoogleGenAI } from "@google/genai";
 import Link from "next/link"
 import {db } from "@/firebaseConfig"
-import { collection, getDocs, query, where, setDoc } from "firebase/firestore/lite"
+import { doc, collection, getDoc, query, where, setDoc, updateDoc, arrayUnion } from "firebase/firestore/lite"
 
-// Add a new document with a generated id.
-// const docRef = await addDoc(collection(db, "cities"), {
-//     name: "Tokyo",
-//     country: "Japan"
-//   });
-//   console.log("Document written with ID: ", docRef.id);
 
 const ai = new GoogleGenAI({
     apiKey: process.env.NEXT_PUBLIC_GEMINI_APIKEY,
@@ -59,36 +53,167 @@ export const Chat = ({activeUser}) => {
     // },[activeUser]);
 
     const submitMessage = async (senderId) => {
+        const caramelId = "CtB8aUHhqiBdWzzVtCZz"; // ID de Caramel
+        const userId = activeUser?.user?.id; // ID del usuario activo
+        const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
+        // console.log("la referencia a la conersacion",conversationRef)
+        // Verificar si el mensaje es para la IA (Caramel)
+        // console.log("senderId", senderId)
+        if (activeUser?.user?.id === caramelId) {
+            if (senderId !== "me") {
+                alert("Solo puedes hablar con la IA cuando estás en el chat de Caramel.");
+                return;
+            }
         const newMessage = {
             text: inputValue,
-            senderId: senderId ,
+            senderId: senderId,
+            date: new Date().toISOString(),
+            read: senderId === "me", // Si lo envías tú, se marca como leído
         };
-
+        // console.log("el nuevo mensaje", newMessage)
+        try {
+            // Verificar si la conversación ya existe
+            const conversationSnap = await getDoc(conversationRef);
+            console.log(" el snap de la conversacion", conversationSnap)
+    
+            if (conversationSnap.exists()) {
+                // Si existe, actualiza el array de mensajes y el último mensaje
+                await updateDoc(conversationRef, {
+                    messages: arrayUnion(newMessage),
+                    lastMessage: inputValue,
+                });
+            } else {
+                // Si no existe, crea un nuevo documento con el mensaje inicial
+                await setDoc(conversationRef, {
+                    userId: userId,
+                    messages: [newMessage],
+                    lastMessage: inputValue,
+                });
+            }
+    
+            // Actualizar el estado local de mensajes
+            // setMessages((prev) => [...prev, newMessage]);
+            // setInputValue(""); // Limpiar el campo de entrada
+        } catch (error) {
+            console.error("Error al guardar el mensaje:", error);
+        }
+            // Agregar el mensaje del usuario al estado antes de enviar a la IA
+        // const newMessage = {
+        //     text: inputValue,
+        //     senderId: senderId,
+        // };
         setMessages((prev) => [...prev, newMessage]);
 
-        
-        await askGemini(inputValue)
+            // Enviar mensaje a la IA
+            await askGemini(inputValue);
+        } else {
+            // Enviar mensaje a otro usuario
+            const newMessage = {
+                text: inputValue,
+                senderId: senderId,
+            };
+    
+            setMessages((prev) => [...prev, newMessage]);
+        }
+    
         setInputValue("");
-        // console.log(author)
-    } 
-    // console.log(activeUser)  
-    // href={`/perfil?userName=${activeUser.user.name}`}
+    };
 
+    // const askGemini = async (inputValue) => {
+
+    //     if (activeUser?.user?.id !== "CtB8aUHhqiBdWzzVtCZz") {
+    //         alert("Solo puedes hablar con la IA cuando estás en el chat de Caramel.");
+    //         return;
+    //     }
+
+    //     const response = await chat.sendMessage({
+    //         message: inputValue,
+    //     })
+
+    //     // console.log("responde", response.text);
+
+    //     const newMessage ={
+    //         text: response.text,
+    //         senderId: activeUser.user.id
+    //     };
+
+    //     setMessages((prev) => [...prev, newMessage]);
+    // }
     const askGemini = async (inputValue) => {
+        const caramelId = "CtB8aUHhqiBdWzzVtCZz"; // ID de Caramel
+        const userId = activeUser?.user?.id; // ID del usuario activo
+        const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
+    
+        if (activeUser?.user?.id !== caramelId) {
+            alert("Solo puedes hablar con la IA cuando estás en el chat de Caramel.");
+            return;
+        }
+    
         const response = await chat.sendMessage({
             message: inputValue,
-        })
-
+        });
+    
         console.log("responde", response.text);
-
-        const newMessage ={
+    
+        const newMessage = {
             text: response.text,
-            senderId: activeUser.user.id
+            senderId: caramelId, // El ID de la IA
+            date: new Date().toISOString(),
+            read: true, // Se marca como leído automáticamente
+        };
+    
+        try {
+            // Actualizar Firestore con el mensaje de la IA
+            const conversationSnap = await getDoc(conversationRef);
+    
+            if (conversationSnap.exists()) {
+                // Si la conversación existe, actualiza el array de mensajes y el último mensaje
+                await updateDoc(conversationRef, {
+                    messages: arrayUnion(newMessage),
+                    lastMessage: response.text,
+                });
+            } else {
+                // Si no existe, crea un nuevo documento con el mensaje inicial
+                await setDoc(conversationRef, {
+                    userId: userId,
+                    messages: [newMessage],
+                    lastMessage: response.text,
+                });
+            }
+    
+            // Actualizar el estado local de mensajes
+            setMessages((prev) => [...prev, newMessage]);
+        } catch (error) {
+            console.error("Error al guardar el mensaje de la IA:", error);
+        }
+    };
+
+    useEffect(() => {
+        const loadMessages = async () => {
+            if (!activeUser) return; // Si no hay usuario activo, no hacer nada
+
+            const userId = activeUser.user.id; // ID del usuario activo
+            const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
+
+            try {
+                const conversationSnap = await getDoc(conversationRef);
+
+                if (conversationSnap.exists()) {
+                    // Si la conversación existe, cargar los mensajes
+                    const conversationData = conversationSnap.data();
+                    setMessages(conversationData.messages || []); // Cargar los mensajes en el estado
+                } else {
+                    // Si no existe, limpiar los mensajes
+                    setMessages([]);
+                }
+            } catch (error) {
+                console.error("Error al cargar los mensajes:", error);
+            }
         };
 
-        setMessages((prev) => [...prev, newMessage]);
-    }
-
+        loadMessages();
+    }, [activeUser]); // Ejecutar cada vez que cambie el usuario activo
+    
     return(
         <div className="display: flex flex-col justify-between bg-blue-900 m-1 p-1 border-2 border-blue-500 rounded-3xl ">
             <div className="flex justify-between m-2 items-center">

@@ -16,7 +16,7 @@ export const ContactCard = ({user,setActiveUser,activeUser}) => {
             // de esta forma a la imagen referenciada le creamos una url o traemos la url de la storage
             const imageUrl = await getDownloadURL(imageRef)
     
-            console.log("image",imageUrl);
+            // console.log("image",imageUrl);
             // // ubicamos la imagen a la setImage, para que sea el estado de image 
             setUrlStorage(imageUrl)
             // console.log(urlStorage)
