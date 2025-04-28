@@ -33,6 +33,50 @@ export const Chat = ({activeUser}) => {
           },
     });
 
+    const submitMessage = async (senderId) => {
+        const caramelId = "CtB8aUHhqiBdWzzVtCZz"; // ID de Caramel
+        const userId = activeUser?.user?.id; // ID del usuario activo
+        const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
+    
+        const newMessage = {
+            text: inputValue,
+            senderId: senderId,
+            date: new Date().toISOString(),
+            read: senderId === "me", // Si lo envías tú, se marca como leído
+        };
+    
+        try {
+            // Verificar si la conversación ya existe
+            const conversationSnap = await getDoc(conversationRef);
+    
+            if (conversationSnap.exists()) {
+                // Si existe, actualiza el array de mensajes y el último mensaje
+                await updateDoc(conversationRef, {
+                    messages: arrayUnion(newMessage),
+                    lastMessage: inputValue,
+                });
+            } else {
+                // Si no existe, crea un nuevo documento con el mensaje inicial
+                await setDoc(conversationRef, {
+                    userId: userId,
+                    messages: [newMessage],
+                    lastMessage: inputValue,
+                });
+            }
+    
+            // Actualizar el estado local de mensajes
+            setMessages((prev) => [...prev, newMessage]);
+            setInputValue(""); // Limpiar el campo de entrada
+        } catch (error) {
+            console.error("Error al guardar el mensaje:", error);
+        }
+    
+        // Si el mensaje es para la IA, también envía el mensaje a la IA
+        if (userId === caramelId && senderId === "me") {
+            await askGemini(inputValue);
+        }
+    };
+
     // useEffect( () => {
     //     setMessages([]);
     //     const getConversations = async () => {
@@ -52,72 +96,72 @@ export const Chat = ({activeUser}) => {
     //     getConversations();
     // },[activeUser]);
 
-    const submitMessage = async (senderId) => {
-        const caramelId = "CtB8aUHhqiBdWzzVtCZz"; // ID de Caramel
-        const userId = activeUser?.user?.id; // ID del usuario activo
-        const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
-        // console.log("la referencia a la conersacion",conversationRef)
-        // Verificar si el mensaje es para la IA (Caramel)
-        // console.log("senderId", senderId)
-        if (activeUser?.user?.id === caramelId) {
-            if (senderId !== "me") {
-                alert("Solo puedes hablar con la IA cuando estás en el chat de Caramel.");
-                return;
-            }
-        const newMessage = {
-            text: inputValue,
-            senderId: senderId,
-            date: new Date().toISOString(),
-            read: senderId === "me", // Si lo envías tú, se marca como leído
-        };
-        // console.log("el nuevo mensaje", newMessage)
-        try {
-            // Verificar si la conversación ya existe
-            const conversationSnap = await getDoc(conversationRef);
-            console.log(" el snap de la conversacion", conversationSnap)
+    // const submitMessage = async (senderId) => {
+    //     const caramelId = "CtB8aUHhqiBdWzzVtCZz"; // ID de Caramel
+    //     const userId = activeUser?.user?.id; // ID del usuario activo
+    //     const conversationRef = doc(db, "conversations", userId); // Referencia al documento de la conversación
+    //     // console.log("la referencia a la conersacion",conversationRef)
+    //     // Verificar si el mensaje es para la IA (Caramel)
+    //     // console.log("senderId", senderId)
+    //     if (activeUser?.user?.id === caramelId) {
+    //         if (senderId !== "me") {
+    //             alert("Solo puedes hablar con la IA cuando estás en el chat de Caramel.");
+    //             return;
+    //         }
+    //     const newMessage = {
+    //         text: inputValue,
+    //         senderId: senderId,
+    //         date: new Date().toISOString(),
+    //         read: senderId === "me", // Si lo envías tú, se marca como leído
+    //     };
+    //     // console.log("el nuevo mensaje", newMessage)
+    //     try {
+    //         // Verificar si la conversación ya existe
+    //         const conversationSnap = await getDoc(conversationRef);
+    //         console.log(" el snap de la conversacion", conversationSnap)
     
-            if (conversationSnap.exists()) {
-                // Si existe, actualiza el array de mensajes y el último mensaje
-                await updateDoc(conversationRef, {
-                    messages: arrayUnion(newMessage),
-                    lastMessage: inputValue,
-                });
-            } else {
-                // Si no existe, crea un nuevo documento con el mensaje inicial
-                await setDoc(conversationRef, {
-                    userId: userId,
-                    messages: [newMessage],
-                    lastMessage: inputValue,
-                });
-            }
+    //         if (conversationSnap.exists()) {
+    //             // Si existe, actualiza el array de mensajes y el último mensaje
+    //             await updateDoc(conversationRef, {
+    //                 messages: arrayUnion(newMessage),
+    //                 lastMessage: inputValue,
+    //             });
+    //         } else {
+    //             // Si no existe, crea un nuevo documento con el mensaje inicial
+    //             await setDoc(conversationRef, {
+    //                 userId: userId,
+    //                 messages: [newMessage],
+    //                 lastMessage: inputValue,
+    //             });
+    //         }
     
-            // Actualizar el estado local de mensajes
-            // setMessages((prev) => [...prev, newMessage]);
-            // setInputValue(""); // Limpiar el campo de entrada
-        } catch (error) {
-            console.error("Error al guardar el mensaje:", error);
-        }
-            // Agregar el mensaje del usuario al estado antes de enviar a la IA
-        // const newMessage = {
-        //     text: inputValue,
-        //     senderId: senderId,
-        // };
-        setMessages((prev) => [...prev, newMessage]);
+    //         // Actualizar el estado local de mensajes
+    //         // setMessages((prev) => [...prev, newMessage]);
+    //         // setInputValue(""); // Limpiar el campo de entrada
+    //     } catch (error) {
+    //         console.error("Error al guardar el mensaje:", error);
+    //     }
+    //         // Agregar el mensaje del usuario al estado antes de enviar a la IA
+    //     // const newMessage = {
+    //     //     text: inputValue,
+    //     //     senderId: senderId,
+    //     // };
+    //     setMessages((prev) => [...prev, newMessage]);
 
-            // Enviar mensaje a la IA
-            await askGemini(inputValue);
-        } else {
-            // Enviar mensaje a otro usuario
-            const newMessage = {
-                text: inputValue,
-                senderId: senderId,
-            };
+    //         // Enviar mensaje a la IA
+    //         await askGemini(inputValue);
+    //     } else {
+    //         // Enviar mensaje a otro usuario
+    //         const newMessage = {
+    //             text: inputValue,
+    //             senderId: senderId,
+    //         };
     
-            setMessages((prev) => [...prev, newMessage]);
-        }
+    //         setMessages((prev) => [...prev, newMessage]);
+    //     }
     
-        setInputValue("");
-    };
+    //     setInputValue("");
+    // };
 
     // const askGemini = async (inputValue) => {
 
@@ -213,7 +257,7 @@ export const Chat = ({activeUser}) => {
 
         loadMessages();
     }, [activeUser]); // Ejecutar cada vez que cambie el usuario activo
-    
+
     return(
         <div className="display: flex flex-col justify-between bg-blue-900 m-1 p-1 border-2 border-blue-500 rounded-3xl ">
             <div className="flex justify-between m-2 items-center">
