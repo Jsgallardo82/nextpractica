@@ -42,9 +42,9 @@ export default function Home() {
   // en este caso como el segundo parametro esta vacio, la funcion solo se ejecuta la primera vez, no cuando existan cambios
   // console.log(activeUser)
   return (
-    <section className="bg-blue-900 p-2 h-screen">
+    <section className="bg-blue-900 p-4 h-screen max-w-screen-lg mx-auto">
       <Header />
-      <div className="display: grid grid-cols-2 gap-1 h-[90vh]" style={{gridTemplateColumns: "1fr 4fr"}} >
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_4fr] gap-4 flex-grow overflow-hidden h-[92%] max-h-full" >
         <ContactList usersList={usersList} setActiveUser={setActiveUser} activeUser={activeUser}/>
         <>
           {activeUser ?
@@ -52,7 +52,7 @@ export default function Home() {
       
         : 
           
-              <div className="bg-blue-900 text-3xl font-bold underline text-black">Elige un usuario para chatear</div>
+              <div className="flex items-center justify-center bg-blue-800 text-white text-xl md:text-3xl font-bold underline rounded-lg h-full w-full">Elige un usuario para chatear</div>
 
         
         }

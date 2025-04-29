@@ -65,9 +65,10 @@ export const ContactList = ({setActiveUser,usersList,activeUser}) => {
     }
 
     return(
-        <nav className=" flex-col  overflow-y-scroll scrollbar-none border-2 rounded-3xl m-1" > 
-            <div className="flex justify-around  bg-blue-900 text-center items-center">
-                <h2 className="text-white"
+        <nav className=" flex flex-col  border-2 overflow-y-scroll rounded-3xl m-1 overflow-hidden pt-2 bg-blue-800 h-[90%] max-h-screen " > 
+        {/* flex flex-col h-full overflow-y-scroll scrollbar-none border-2 rounded-3xl m-1 p-4 bg-blue-900 */}
+            <div className="flex justify-around  bg-blue-800 text-center items-center">
+                <h2 className="text-white text-lg md:text-xl"
                     style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 3)'
                     }} >Lista de chats</h2>

@@ -35,23 +35,25 @@ export const ContactCard = ({user,setActiveUser,activeUser}) => {
     return(
         // al poner user entre corchetes, lo estoy ingresando como un objeto, en preferencia, escribirlo sin corchetes
         <div 
-            className={`hover:bg-sky-700 cursor-pointer ${activeUser?.user?.name === user.name ? "bg-blue-700":"bg-blue-400"} flex rounded-3xl border-2 shadow-2xl m-1`} 
+            className={`hover:bg-sky-700 cursor-pointer ${activeUser?.user?.name === user.name ? "bg-blue-700":"bg-blue-400"} flex  rounded-3xl border-2 shadow-2xl m-1`} 
             onClick={()=> setActiveUser({user})}
         >
-            <div className="rounded-lg overflow-hidden m-1 p-3">
-                <img className="h-30 w-30 rounded-4xl border-2 " 
-                    src={ urlStorage || user.url}></img>
+            <div className="rounded-lg overflow-hidden ">
+                <img className="h-auto w-auto md:h-30 md:w-30 rounded-full border-2 object-cover " 
+                    src={ urlStorage || user.url}
+                    alt={`${user.name} ${user.lastName}`}
+                />
             </div>
-            <div className="flex flex-col justify-center">
-                <h3
-                    className="text-white"
+            <div className="flex flex-col justify-center text-center md:text-left">
+                <p
+                    className="text-white text-sm md:text-sm font-bold"
                     style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 1)'
                     }}
                     >
                     {user.name} {user.lastName}
-                </h3>
-                <p className="text-white text-2xl"
+                </p>
+                <p className="text-white text-xs md:text-sm"
                     style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 1)'
                     }}

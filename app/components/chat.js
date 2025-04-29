@@ -259,26 +259,30 @@ export const Chat = ({activeUser}) => {
     }, [activeUser]); // Ejecutar cada vez que cambie el usuario activo
 
     return(
-        <div className="display: flex flex-col justify-between bg-blue-900 m-1 p-1 border-2 border-blue-500 rounded-3xl ">
-            <div className="flex justify-between m-2 items-center">
+        <div className="flex flex-col justify-between bg-blue-900 m-1 p-2 border-2 border-blue-500 rounded-3xl h-[90%] max-h-screen">
+        {/* flex flex-col justify-between bg-blue-900 m-1 p-2 border-2 border-blue-500 rounded-3xl h-full */}
+            <div className="flex flex-wrap justify-between mb-2 items-center">
                 <h2 
                     style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 3)'
                     }}
-                    className="text-white text-2xl flex justify-center items-center font-bold underline ">Caja de chat-{""}{activeUser ? activeUser.user.name : "Elige un usuario para chatear"} 
+                    className="text-white text-sm md:text-lg  items-center font-bold underline w-full md:w-auto
+                    ">Caja de chat-{""}{activeUser ? activeUser.user.name : "Elige un usuario para chatear"} 
+                    {/* text-white text-sm md:text-lg font-bold underline text-center w-full md:w-auto */}
                 </h2>
-                <div className="flex justify-around gap-3">
+                <div className="flex flex-wrap justify-around gap-3 items-center">
                     {/* <Link href={`/perfil?id=${activeUser?.user?.id}`} style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 3)'
                     }} className="bg-blue-600 m-2 p-3 border-2 border-blue-300 rounded-2xl text-sm text-white cursor-pointer hover:bg-blue-900 active:translate-y-0.5" >VER PERFIL</Link>  */}
 
                     <Link href={`/perfil/${user}`} style={{
                         textShadow: '2px 2px 8px rgba(0, 0, 0, 3)'
-                    }} className="bg-blue-600 flex items-center h-10 mt-4 p-3 border-2 border-blue-300 rounded-2xl text-sm text-white cursor-pointer hover:bg-blue-900 active:translate-y-0.5"  >VER PERFIL </Link> 
-                    <img className="h-30 w-30 rounded-3xl border-blue-400 border-4" src={activeUser.user.url}></img>
+                    }} className="bg-blue-600 flex items-center h-10 px-3 border-2 border-blue-300 rounded-2xl text-sm text-white cursor-pointer hover:bg-blue-900 active:translate-y-0.5"  >VER PERFIL </Link> 
+                    <img className="h-16 w-16 md:h-20 md:w-20 rounded-3xl border-blue-400 border-4" src={activeUser.user.url}></img>
                 </div>
             </div>
-            <section className="border-blue-400 border-5 w-full h-[65vh] gap-2 rounded-2xl overflow-y-scroll scrollbar-none">
+            <section className="border-blue-400 border-5 w-full h-[50vh] md:h-[65vh] gap-2 rounded-2xl overflow-y-scroll ">
+            {/* border-blue-400 border-5 w-full h-[50vh] md:h-[65vh] gap-2 rounded-2xl overflow-y-scroll scrollbar-none p-2 */}
             {messages.map((message,index) =>(
                 <div 
                     key={index}
@@ -290,22 +294,23 @@ export const Chat = ({activeUser}) => {
                 </div>
             ))}
             </section>
-            <div className="flex w-full">
+            <div className="flex  w-full gap-2 mt-2">
                 <input 
                     type="text" 
                     value={inputValue}
-                    className="bg-white w-full text-black rounded-tl-xl rounded-bl-xl p-1 m-1 " 
+                    className="bg-white w-full  md:w-auto flex-grow text-black rounded-tl-xl rounded-bl-xl p-2  " 
+                    
                     onChange={(event) => setInputValue(event.target.value)}
                 ></input>
                 <button
-                    className="bg-blue-400 border border-black rounded px-4 py-2 hover:bg-blue-300"
+                    className="bg-blue-400 border border-black rounded px-2 py-1 text-xs md:text-sm hover:bg-blue-300"
                     onClick={() => submitMessage("me")}
                     >
                     Enviar  (como yo)
                 </button>
 
                 <button
-                    className="bg-blue-500 border border-black rounded px-2 py-2 hover:bg-blue-600"
+                    className="bg-blue-500 border border-black rounded px-2 py-1 text-xs md:text-sm  hover:bg-blue-600"
                     onClick={() => submitMessage(activeUser.user.id)}
                     >
                     Enviar (como {activeUser.user.name})
